@@ -1,0 +1,173 @@
+.container_logo {
+    z-index: 1;
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 80px;
+    left: 46%;
+    top: 90%;
+}
+
+.logo_ring_outside{
+    width: 65px;
+    height: 65px; 
+    border-radius: 40%;
+    background-color: rgba(28, 29, 32, 1);
+    cursor: pointer;
+}
+
+.logo_ring_inside {
+    display: flex;
+    justify-content: center; 
+    align-items: center;     
+    width: 65px;
+    height: 65px; 
+    background-color: rgba(28, 29, 32, 1);
+    border-radius: 100%;
+}
+
+.hexagon {
+    width: 12px;
+    height: 25px;
+    background-color: rgb(255, 255, 255);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center center;
+    clip-path: polygon(
+        50% 0%,    /* Top middle point */
+        15% 15%,   /* Top left curve */
+        15% 80%,   /* Bottom left curve */
+        50% 100%,  /* Bottom middle point 85 is circle 100 is sharp */
+        85% 80%,   /* Bottom right curve */
+        85% 15%    /* Top right curve */
+    );
+    transition: width 0.4s ease-in-out, height 0.4s ease-in-out, margin 0.4s ease-in-out; /* Smooth transitions */
+    animation: pulse 2s infinite ease-in-out; /* Apply pulse animation */
+    animation-play-state: running; /* Ensure animation is running by default used to stop when hover*/
+}
+
+/* First Hexagon - No rotation */
+.hex1 {
+    transform: translate(-50%, -50%) rotate(-135deg);
+    margin-left: -10px;
+    margin-top: 10px;
+}
+
+/* Second Hexagon - 90 degrees rotation */
+.hex2 {
+    transform: translate(-50%, -50%) rotate(135deg);
+    margin-left: 10px;
+    margin-top: 10px;
+}
+
+/* Third Hexagon - 180 degrees rotation */
+.hex3 {
+    transform: translate(-50%, -50%) rotate(45deg);
+    margin-left: 10px;
+    margin-top: -10px;
+}
+
+/* Fourth Hexagon - 270 degrees rotation */
+.hex4 {
+    transform: translate(-50%, -50%) rotate(315deg);
+    margin-left: -10px;
+    margin-top: -10px;
+}
+
+/* Circle in the center */
+.circle {
+    width: 6px;  
+    height: 6px;  
+    background-color: rgb(255, 0, 255); 
+    border: 0px solid white; 
+    border-radius: 100%; 
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center the circle */
+    z-index: 2;
+    transition: border-width 0.3s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out; /* Smooth transitions */
+    animation: pulse_circle 2s infinite  ease-in-out; /* Apply pulse animation */
+    animation-play-state: running; /* Ensure animation is running by default */
+}
+
+/* Pause the animation on hover */
+.container_logo:hover .hexagon,
+.container_logo:hover .circle {
+    animation-play-state: paused;
+}
+
+.container_logo:hover .circle {
+    background-color: rgb(255, 0, 255);
+    border-color: rgb(255, 255, 255); 
+    border: 10px solid white; 
+    width: 12px;   /* Increase diameter of the circle */
+    height: 12px;  /* Increase diameter of the circle */
+}
+
+.container_logo:hover .hexagon {
+    z-index: 0;
+    height: 5px;  /* Shrink the hexagon to 5px height */
+    width: 5px;  /* Shrink the hexagon to 5px width */
+    margin-left: 0px; /* Reduce margin-left on hover */
+    margin-top: 0px;  /* Reduce margin-top on hover */
+}
+
+.logo_ring_outside {
+    animation: rotate_outside 4s linear infinite; /* turning against the clock */
+}
+
+.logo_ring_inside{
+    animation: rotate_inside 4s linear infinite; /* turning with the clock */
+}
+
+
+@keyframes pulse {
+    0% {
+        height: 25px;
+    }
+    50% {
+        height: 20px;
+    }
+    100% {
+        height: 25px;
+    }
+}
+
+@keyframes pulse_circle {
+    0% {
+        width: 6px;
+        height: 6px;
+    }
+    50% {
+        width: 8px;
+        height: 8px;
+    }
+    100% {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+@keyframes rotate_inside{
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes rotate_outside{
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,60 @@
+/*color profiles: 
+body: #738099 of rgba(128, 140, 163, 1)
+first dark: rgba(28, 29, 32, 1)
+second dark: rgba(41, 42, 45, 1)
+third dark: rgba(80, 85, 94, 1)
+
+text color: rgb(215, 215, 216)
+*/
+
+*{
+    color: rgb(215, 215, 216);
+    font-size: 11px;
+    font-family: Arial, sans-serif;
+}
+
+html {
+    height: 100%;
+}
+
+
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: rgba(128, 140, 163, 1);
+    overflow: hidden; /* Prevents scrollbars */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.gpu-item {
+    border-radius: 25px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin: 10px;
+    padding: 20px;
+    text-align: center;
+    width: 200px;
+}
+
+button {
+    background-color: #ff5555;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #ff7777;
+}
