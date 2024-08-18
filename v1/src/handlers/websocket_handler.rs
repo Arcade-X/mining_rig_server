@@ -79,7 +79,7 @@ pub async fn listen_for_commands() {
     // For example, periodically checking for messages or interacting with connected clients
     loop {
         // Example debug message
-        println!("Listening...");
+       
         task::yield_now().await;
     }
 }

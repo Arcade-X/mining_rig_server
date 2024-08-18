@@ -1,116 +1,23 @@
-use actix_files::{Files, NamedFile}; // For serving static files
-use actix_web::{web, App, HttpServer, Error, HttpRequest, HttpResponse}; // Main web-related imports
-use actix_web_actors::ws::{self, WebsocketContext}; // WebSocket support
-use actix::{Actor, StreamHandler, Addr, AsyncContext, Handler}; // Actix actor framework and Handler trait
-use dotenv::dotenv; // For loading environment variables
-use sqlx::SqlitePool; // For database connection pooling
-use std::env; // For environment variable access
-use std::io; // For standard I/O operations
-use std::collections::HashSet; // For storing WebSocket clients
-use std::sync::{Arc, Mutex}; // For thread-safe shared state management
-use serde::{Serialize, Deserialize}; // Serialization and deserialization
+use actix_files::{Files, NamedFile};
+use actix_web::{web, App, HttpServer};
+use dotenv::dotenv;
+use sqlx::SqlitePool;
+use std::env;
+use std::io;
+use std::collections::HashSet;
+use std::sync::{Arc, Mutex};
+use actix::Addr;
 
 // Import your handlers
 mod handlers;
-use handlers::gpu::{get_gpus, create_gpu, delete_gpu};  // Import GPU handlers
-use handlers::websocket_handler::{listen_for_commands}; // Import WebSocket handler
+use handlers::rig::{get_rigs_with_gpus, update_rig_farm}; // Import the new handler to get rigs with GPUs and update farm
+use handlers::farm::{get_farms, create_farm, update_farm, delete_farm}; // Updated imports
+use handlers::websocket_handler::{listen_for_commands, MyWebSocket, ws_index};
 
-// -----------------------------------
-// GPU Data Models
-// -----------------------------------
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Gpu {
-    id: i64,
-    name: String,
-    temp: f64,
-    watt: f64,
+async fn index() -> Result<NamedFile, actix_web::Error> {
+    let path: std::path::PathBuf = "./static/index.html".parse().unwrap();
+    Ok(NamedFile::open(path)?)
 }
-
-// -----------------------------------
-// WebSocket Struct and Implementations
-// -----------------------------------
-
-struct MyWebSocket {
-    clients: Arc<Mutex<HashSet<Addr<MyWebSocket>>>>, // Thread-safe client list
-}
-
-impl MyWebSocket {
-    // Initialize a new WebSocket instance with a shared client list
-    fn new(clients: Arc<Mutex<HashSet<Addr<MyWebSocket>>>>) -> Self {
-        MyWebSocket { clients }
-    }
-}
-
-// Implementing the Actor trait for MyWebSocket to make it work as an actor
-impl Actor for MyWebSocket {
-    type Context = WebsocketContext<Self>;
-
-    // Called when WebSocket starts
-    fn started(&mut self, ctx: &mut Self::Context) {
-        let addr = ctx.address();
-        self.clients.lock().unwrap().insert(addr);
-    }
-
-    // Called when WebSocket stops
-    fn stopped(&mut self, ctx: &mut Self::Context) {
-        let addr = ctx.address();
-        self.clients.lock().unwrap().remove(&addr);
-    }
-}
-
-// Handle incoming WebSocket messages
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            Ok(ws::Message::Text(text)) => ctx.text(text),
-            Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
-            _ => (),
-        }
-    }
-}
-
-// -----------------------------------
-// WebSocket Route Handler
-// -----------------------------------
-
-async fn ws_index(
-    r: HttpRequest, 
-    stream: web::Payload, 
-    clients: web::Data<Arc<Mutex<HashSet<Addr<MyWebSocket>>>>>
-) -> Result<HttpResponse, Error> {
-    ws::start(MyWebSocket::new(clients.get_ref().clone()), &r, stream)
-}
-
-// -----------------------------------
-// Custom Message Struct for WebSocket Communication
-// -----------------------------------
-
-struct MyWebSocketMessage(String);
-
-impl actix::Message for MyWebSocketMessage {
-    type Result = ();
-}
-
-impl Handler<MyWebSocketMessage> for MyWebSocket {
-    type Result = ();
-
-    fn handle(&mut self, msg: MyWebSocketMessage, ctx: &mut Self::Context) {
-        ctx.text(msg.0);
-    }
-}
-
-// -----------------------------------
-// Serve the index.html file
-// -----------------------------------
-
-async fn index() -> Result<NamedFile, std::io::Error> {
-    NamedFile::open("./static/index.html")
-}
-
-// -----------------------------------
-// Main Function and Server Setup
-// -----------------------------------
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -132,9 +39,12 @@ async fn main() -> io::Result<()> {
             .app_data(web::Data::new(pool.clone())) // Share the database pool
             .app_data(web::Data::new(clients.clone())) // Share WebSocket client state
             .route("/", web::get().to(index)) // Serve the index file
-            .route("/gpus", web::get().to(get_gpus)) // Get GPUs
-            .route("/gpus", web::post().to(create_gpu)) // Create a GPU
-            .route("/gpus/{id}", web::delete().to(delete_gpu)) // Delete a GPU
+            .route("/rigs", web::get().to(get_rigs_with_gpus)) // Get Rigs with GPUs
+            .route("/farms", web::get().to(get_farms)) // Get Farms
+            .route("/farms", web::post().to(create_farm)) // Create a Farm
+            .route("/farms/{id}", web::put().to(update_farm)) // Update a Farm
+            .route("/farms/{id}", web::delete().to(delete_farm)) // Delete a Farm
+            .route("/rigs/{id}/move", web::put().to(update_rig_farm)) // Route for moving a rig
             .route("/ws/", web::get().to(ws_index)) // WebSocket route
             .service(Files::new("/js", "./static/js"))  // Serve static JS files
             .service(Files::new("/css", "./static/css"))  // Serve static CSS files

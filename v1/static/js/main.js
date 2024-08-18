@@ -6,5 +6,5 @@ socket.addEventListener('open', function (event) {
 
 socket.addEventListener('message', function (event) {
     console.log('Message from server: ', event.data);
-    loadGpus(); // Refresh the GPU list when a new message is received
+    loadFarms(); // Refresh the Farm list when a new message is received
 });
