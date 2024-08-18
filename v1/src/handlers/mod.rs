@@ -1,2 +1,2 @@
 pub mod gpu;
-// pub mod overclock; Uncomment when you add overclock functionality
+pub mod websocket_handler; // WebSocket handler module

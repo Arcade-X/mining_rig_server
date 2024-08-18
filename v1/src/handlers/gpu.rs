@@ -2,7 +2,7 @@ use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
-// Data structure for GPU
+// Data structure for creating a new GPU entry
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NewGpu {
     pub name: String,
@@ -10,6 +10,7 @@ pub struct NewGpu {
     pub watt: f64,
 }
 
+// Data structure for an existing GPU entry
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Gpu {
     pub id: i64,
@@ -18,7 +19,7 @@ pub struct Gpu {
     pub watt: f64,
 }
 
-// Handler to get all GPUs
+// Handler to get all GPUs from the database
 pub async fn get_gpus(pool: web::Data<SqlitePool>) -> impl Responder {
     let gpus = sqlx::query_as!(Gpu, "SELECT id, name, temp, watt FROM gpu")
         .fetch_all(pool.get_ref())
@@ -30,7 +31,7 @@ pub async fn get_gpus(pool: web::Data<SqlitePool>) -> impl Responder {
     }
 }
 
-// Handler to add a new GPU
+// Handler to add a new GPU to the database
 pub async fn create_gpu(pool: web::Data<SqlitePool>, gpu: web::Json<NewGpu>) -> impl Responder {
     let result = sqlx::query!(
         "INSERT INTO gpu (name, temp, watt) VALUES (?, ?, ?)",

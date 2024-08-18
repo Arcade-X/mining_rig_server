@@ -13,6 +13,7 @@ use serde::{Serialize, Deserialize}; // Serialization and deserialization
 // Import your handlers
 mod handlers;
 use handlers::gpu::{get_gpus, create_gpu, delete_gpu};  // Import GPU handlers
+use handlers::websocket_handler::{listen_for_commands}; // Import WebSocket handler
 
 // -----------------------------------
 // GPU Data Models
@@ -122,6 +123,9 @@ async fn main() -> io::Result<()> {
     });
 
     let clients = Arc::new(Mutex::new(HashSet::<Addr<MyWebSocket>>::new()));
+
+    // Start the WebSocket listener
+    tokio::spawn(listen_for_commands());
 
     HttpServer::new(move || {
         App::new()
