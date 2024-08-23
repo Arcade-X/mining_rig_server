@@ -49,7 +49,7 @@ async fn main() -> io::Result<()> {
             .service(Files::new("/js", "./static/js"))  // Serve static JS files
             .service(Files::new("/css", "./static/css"))  // Serve static CSS files
     })
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")? // Listen on all network interfaces
     .run()
     .await
 }

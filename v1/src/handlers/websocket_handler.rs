@@ -6,6 +6,15 @@ use std::collections::HashSet;
 use actix_web::{web, HttpRequest, HttpResponse, Error};
 use tokio::task;
 
+// Define the GpuData struct to match the structure sent by the client
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GpuData {
+    pub name: String,
+    pub temp: f64,
+    pub watt: f64,
+    pub fan_speed: f64,
+}
+
 // WebSocket message structure
 #[derive(Message, Serialize, Deserialize)]
 #[rtype(result = "()")]
@@ -45,8 +54,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Text(text)) => {
-                println!("Received command: {}", text); // Debug log for received command
-                ctx.text(format!("Server received: {}", text));
+                // Attempt to deserialize the message as GpuData
+                if let Ok(gpu_data) = serde_json::from_str::<GpuData>(&text) {
+                    println!("Received GPU data: {:?}", gpu_data);
+                } else {
+                    println!("Received command: {}", text); // Handle as a command if not GpuData
+                    ctx.text(format!("Server received: {}", text));
+                }
             }
             Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
             _ => (),
@@ -79,7 +93,6 @@ pub async fn listen_for_commands() {
     // For example, periodically checking for messages or interacting with connected clients
     loop {
         // Example debug message
-       
         task::yield_now().await;
     }
 }
