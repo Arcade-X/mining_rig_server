@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use std::collections::HashSet;
 use actix_web::{web, HttpRequest, HttpResponse, Error};
-use tokio::task;
 
 // Define the GpuData struct to match the structure sent by the client
 #[derive(Serialize, Deserialize, Debug)]
@@ -16,9 +15,9 @@ pub struct GpuData {
 }
 
 // WebSocket message structure
-#[derive(Message, Serialize, Deserialize)]
+#[derive(Message, Serialize, Deserialize, Clone)]
 #[rtype(result = "()")]
-struct ServerMessage(String);
+pub struct ServerMessage(String);
 
 // WebSocket actor to manage connections and messaging
 pub struct MyWebSocket {
@@ -86,13 +85,22 @@ pub async fn ws_index(
     ws::start(MyWebSocket::new(clients.get_ref().clone()), &req, stream)
 }
 
-// Function to listen for commands (this was missing)
+// Function to send commands to all connected clients
+pub fn send_command_to_rigs(clients: web::Data<Arc<Mutex<HashSet<Addr<MyWebSocket>>>>>, command: &str) {
+    let message = ServerMessage(command.to_string());
+    let clients = clients.lock().unwrap();
+
+    for client in clients.iter() {
+        client.do_send(message.clone());
+    }
+    
+    println!("Command '{}' sent to all connected rigs", command);
+}
+
+// Function to listen for commands (optional, for future use)
 pub async fn listen_for_commands() {
     println!("Listening for WebSocket commands...");
-    // Here you can add the logic to process commands received over WebSocket
-    // For example, periodically checking for messages or interacting with connected clients
     loop {
-        // Example debug message
-        task::yield_now().await;
+        tokio::task::yield_now().await;
     }
 }

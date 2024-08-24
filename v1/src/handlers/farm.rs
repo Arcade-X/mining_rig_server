@@ -36,7 +36,7 @@ pub async fn get_farms(pool: web::Data<SqlitePool>) -> impl Responder {
             let mut farms: Vec<Farm> = Vec::new();
 
             for record in records {
-                let farm_id = record.farm_id; // farm_id is i64, not Option<i64>
+                let farm_id = record.farm_id;
                 let farm = farms.iter_mut().find(|f| f.id == farm_id);
 
                 if let Some(farm) = farm {
@@ -46,7 +46,7 @@ pub async fn get_farms(pool: web::Data<SqlitePool>) -> impl Responder {
                             if let Some(gpu_id) = record.gpu_id {
                                 rig.gpus.push(crate::handlers::rig::Gpu {
                                     id: gpu_id,
-                                    name: record.gpu_name.clone().unwrap_or_else(|| "".to_string()),
+                                    name: record.gpu_name.clone().unwrap_or_default(),
                                     temp: record.gpu_temp.unwrap_or_default(),
                                     watt: record.gpu_watt.unwrap_or_default(),
                                     rig_id: Some(rig_id),
@@ -55,14 +55,14 @@ pub async fn get_farms(pool: web::Data<SqlitePool>) -> impl Responder {
                         } else {
                             farm.rigs.push(Rig {
                                 id: rig_id,
-                                name: record.rig_name.clone().unwrap_or_else(|| "".to_string()),
+                                name: record.rig_name.clone().unwrap_or_default(),
                                 location: record.rig_location.clone(),
                                 farm_id: Some(farm_id),
                                 mac_address: String::new(),
                                 gpus: if let Some(gpu_id) = record.gpu_id {
                                     vec![crate::handlers::rig::Gpu {
                                         id: gpu_id,
-                                        name: record.gpu_name.clone().unwrap_or_else(|| "".to_string()),
+                                        name: record.gpu_name.clone().unwrap_or_default(),
                                         temp: record.gpu_temp.unwrap_or_default(),
                                         watt: record.gpu_watt.unwrap_or_default(),
                                         rig_id: Some(rig_id),
@@ -84,14 +84,14 @@ pub async fn get_farms(pool: web::Data<SqlitePool>) -> impl Responder {
                     if let Some(rig_id) = record.rig_id {
                         new_farm.rigs.push(Rig {
                             id: rig_id,
-                            name: record.rig_name.clone().unwrap_or_else(|| "".to_string()),
+                            name: record.rig_name.clone().unwrap_or_default(),
                             location: record.rig_location.clone(),
                             farm_id: Some(farm_id),
                             mac_address: String::new(),
                             gpus: if let Some(gpu_id) = record.gpu_id {
                                 vec![crate::handlers::rig::Gpu {
                                     id: gpu_id,
-                                    name: record.gpu_name.clone().unwrap_or_else(|| "".to_string()),
+                                    name: record.gpu_name.clone().unwrap_or_default(),
                                     temp: record.gpu_temp.unwrap_or_default(),
                                     watt: record.gpu_watt.unwrap_or_default(),
                                     rig_id: Some(rig_id),
@@ -158,5 +158,80 @@ pub async fn delete_farm(
     match result {
         Ok(_) => HttpResponse::Ok().body("Farm deleted successfully"),
         Err(err) => HttpResponse::InternalServerError().body(format!("Failed to delete farm: {}", err)),
+    }
+}
+
+// New function to get a farm by ID
+pub async fn get_farm_by_id(
+    pool: web::Data<SqlitePool>,
+    farm_id: web::Path<i64>,
+) -> impl Responder {
+    let farm_with_rigs = sqlx::query!(
+        r#"
+        SELECT farm.id AS farm_id, farm.name AS farm_name, farm.location AS farm_location,
+               rig.id AS rig_id, rig.name AS rig_name, rig.location AS rig_location,
+               gpu.id AS gpu_id, gpu.name AS gpu_name, gpu.temp AS gpu_temp, gpu.watt AS gpu_watt
+        FROM farm
+        LEFT JOIN rig ON farm.id = rig.farm_id
+        LEFT JOIN gpu ON rig.id = gpu.rig_id
+        WHERE farm.id = ?
+        "#,
+        *farm_id
+    )
+    .fetch_all(pool.get_ref())
+    .await;
+
+    match farm_with_rigs {
+        Ok(records) => {
+            if records.is_empty() {
+                return HttpResponse::NotFound().body("Farm not found");
+            }
+
+            let mut farm = Farm {
+                id: records[0].farm_id,
+                name: records[0].farm_name.clone(),
+                location: records[0].farm_location.clone(),
+                rigs: Vec::new(),
+            };
+
+            for record in records {
+                if let Some(rig_id) = record.rig_id {
+                    let rig = farm.rigs.iter_mut().find(|r| r.id == rig_id);
+                    if let Some(rig) = rig {
+                        if let Some(gpu_id) = record.gpu_id {
+                            rig.gpus.push(crate::handlers::rig::Gpu {
+                                id: gpu_id,
+                                name: record.gpu_name.clone().unwrap_or_default(),
+                                temp: record.gpu_temp.unwrap_or_default(),
+                                watt: record.gpu_watt.unwrap_or_default(),
+                                rig_id: Some(rig_id),
+                            });
+                        }
+                    } else {
+                        farm.rigs.push(Rig {
+                            id: rig_id,
+                            name: record.rig_name.clone().unwrap_or_default(),
+                            location: record.rig_location.clone(),
+                            farm_id: Some(farm.id),
+                            mac_address: String::new(),
+                            gpus: if let Some(gpu_id) = record.gpu_id {
+                                vec![crate::handlers::rig::Gpu {
+                                    id: gpu_id,
+                                    name: record.gpu_name.clone().unwrap_or_default(),
+                                    temp: record.gpu_temp.unwrap_or_default(),
+                                    watt: record.gpu_watt.unwrap_or_default(),
+                                    rig_id: Some(rig_id),
+                                }]
+                            } else {
+                                Vec::new()
+                            },
+                        });
+                    }
+                }
+            }
+
+            HttpResponse::Ok().json(farm)
+        }
+        Err(_) => HttpResponse::InternalServerError().body("Error fetching farm with rigs and GPUs"),
     }
 }

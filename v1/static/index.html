@@ -8,29 +8,85 @@
     <link rel="stylesheet" href="./css/logo.css">
 </head>
 <body>
-    <div>
+    <div class="header">
         <h1>MiningArcadex</h1>
+        <button id="createFarm" class="header-button">Create New Farm</button>
     </div>
-    <div class="container" id="farms">
-        <!-- Farms will be loaded here -->
+    
+    <div class="tab-container">
+        <button id="overviewTab" class="tab-link active">Overview</button>
+        <button id="systemOptionsTab" class="tab-link">System Options</button>
     </div>
-    <div>
-        <button id="createFarm">Create New Farm</button>
+    
+    <div class="main-container">
+        <div id="overview-container" class="overview-container">
+            <div class="container" id="overview">
+                <div class="container" id="farms">
+                    <!-- Farms will be loaded here -->
+                </div>
+            </div>
+        </div>
+        <div id="system-options-container" class="system-options-container hidden">
+            <h2>Mining Control</h2>
+            <div class="control-buttons">
+                <button id="startErgo">Start Ergo Mining</button>
+                <button id="startXel">Start Xel Mining</button>
+                <button id="startRVN">Start RVN Mining</button>
+                <button id="startFish">Start Fish Mining</button>
+                <button id="startFlux">Start Flux Mining</button>
+                <button id="startBeam">Start Beam Mining</button>
+                <button id="stopMining">Stop Mining</button>
+            </div>
+            <h2>System Control</h2>
+            <div class="control-buttons">
+                <button id="adjustOverclock">Adjust Overclock</button>
+                <button id="rebootGPU">Reboot GPU</button>
+                <button id="rebootRig">Reboot Rig</button>
+                <button id="rebootAllRigs">Reboot All Rigs</button>
+                <button id="updateSoftware">Update Software</button>
+            </div>
+        </div>
     </div>
-   <!-- animated logo -->
+
+    <!-- animated logo -->
     <div class="container_logo">
         <div class="logo_ring_outside">
             <div class="logo_ring_inside">
                 <div class="container-logo">
-                <div class="hexagon hex1"></div>
-                <div class="hexagon hex2"></div>
-                <div class="hexagon hex3"></div>
-                <div class="hexagon hex4"></div>
-                <div class="circle"></div>
+                    <div class="hexagon hex1"></div>
+                    <div class="hexagon hex2"></div>
+                    <div class="hexagon hex3"></div>
+                    <div class="hexagon hex4"></div>
+                    <div class="circle"></div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal for CRUD and Rig Management -->
+    <div id="farmModal" class="modal">
+        <div class="modal-content">
+            <h3>Farm Management</h3>
+            <select id="farmSelect">
+                <!-- Farms will be populated here -->
+            </select>
+            <div class="modal-buttons">
+                <button id="editFarm">Edit Farm</button>
+                <button id="deleteFarm">Delete Farm</button>
+                <button id="moveRig">Move Rig</button>
+            </div>
+            <div id="rigsContainer" class="hidden">
+                <h4>Select Rigs to Move</h4>
+                <div id="rigsList">
+                    <!-- Rigs will be populated here -->
+                </div>
+                <button id="confirmMoveRigs">Confirm Move</button>
+            </div>
+            <button id="showRigs">Show Farm</button>
+            <button id="closeModal">Close</button>
+        </div>
+    </div>
+
 </body>
 <script src="./js/main.js"></script>
 <script src="./js/events.js"></script>

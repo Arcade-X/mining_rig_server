@@ -1,5 +1,5 @@
 use actix_files::{Files, NamedFile};
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 use dotenv::dotenv;
 use sqlx::SqlitePool;
 use std::env;
@@ -10,13 +10,22 @@ use actix::Addr;
 
 // Import your handlers
 mod handlers;
-use handlers::rig::{get_rigs_with_gpus, update_rig_farm}; // Import the new handler to get rigs with GPUs and update farm
-use handlers::farm::{get_farms, create_farm, update_farm, delete_farm}; // Updated imports
-use handlers::websocket_handler::{listen_for_commands, MyWebSocket, ws_index};
+use handlers::rig::{get_rigs_with_gpus, update_rig_farm}; 
+use handlers::farm::{get_farms, get_farm_by_id, create_farm, update_farm, delete_farm}; 
+use handlers::server_websocket::{listen_for_commands, MyWebSocket, ws_index, send_command_to_rigs};
 
 async fn index() -> Result<NamedFile, actix_web::Error> {
     let path: std::path::PathBuf = "./static/index.html".parse().unwrap();
     Ok(NamedFile::open(path)?)
+}
+
+// This is the async handler for sending commands to rigs
+async fn send_command(
+    clients: web::Data<Arc<Mutex<HashSet<Addr<MyWebSocket>>>>>,
+    command: web::Path<String>,
+) -> impl Responder {
+    send_command_to_rigs(clients, &command);
+    HttpResponse::Ok().body("Command sent")
 }
 
 #[actix_web::main]
@@ -36,20 +45,22 @@ async fn main() -> io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(pool.clone())) // Share the database pool
-            .app_data(web::Data::new(clients.clone())) // Share WebSocket client state
-            .route("/", web::get().to(index)) // Serve the index file
-            .route("/rigs", web::get().to(get_rigs_with_gpus)) // Get Rigs with GPUs
-            .route("/farms", web::get().to(get_farms)) // Get Farms
-            .route("/farms", web::post().to(create_farm)) // Create a Farm
-            .route("/farms/{id}", web::put().to(update_farm)) // Update a Farm
-            .route("/farms/{id}", web::delete().to(delete_farm)) // Delete a Farm
-            .route("/rigs/{id}/move", web::put().to(update_rig_farm)) // Route for moving a rig
-            .route("/ws/", web::get().to(ws_index)) // WebSocket route
-            .service(Files::new("/js", "./static/js"))  // Serve static JS files
-            .service(Files::new("/css", "./static/css"))  // Serve static CSS files
+            .app_data(web::Data::new(pool.clone())) 
+            .app_data(web::Data::new(clients.clone())) 
+            .route("/", web::get().to(index)) 
+            .route("/rigs", web::get().to(get_rigs_with_gpus)) 
+            .route("/farms", web::get().to(get_farms)) 
+            .route("/farms", web::post().to(create_farm)) 
+            .route("/farms/{id}", web::get().to(get_farm_by_id))  // <-- Added route
+            .route("/farms/{id}", web::put().to(update_farm)) 
+            .route("/farms/{id}", web::delete().to(delete_farm)) 
+            .route("/rigs/{id}/move", web::put().to(update_rig_farm)) 
+            .route("/ws/", web::get().to(ws_index)) 
+            .route("/send-command/{command}", web::post().to(send_command)) // Command sending endpoint
+            .service(Files::new("/js", "./static/js")) 
+            .service(Files::new("/css", "./static/css")) 
     })
-    .bind("0.0.0.0:8080")? // Listen on all network interfaces
+    .bind("0.0.0.0:8080")? 
     .run()
     .await
 }
