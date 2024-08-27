@@ -10,7 +10,7 @@
 <body>
     <div class="header">
         <h1>MiningArcadex</h1>
-        <button id="createFarm" class="header-button">Create New Farm</button>
+        <!-- The Create New Farm button has been removed from here -->
     </div>
     
     <div class="tab-container">
@@ -74,6 +74,7 @@
                 <button id="editFarm">Edit Farm</button>
                 <button id="deleteFarm">Delete Farm</button>
                 <button id="moveRig">Move Rig</button>
+                <button id="createFarmInModal" class="header-button">Create New Farm</button> <!-- Renamed the button ID -->
             </div>
             <div id="rigsContainer" class="hidden">
                 <h4>Select Rigs to Move</h4>
@@ -89,5 +90,5 @@
 
 </body>
 <script src="./js/main.js"></script>
-<script src="./js/events.js"></script>
+<script src="./js/ws_functions.js"></script>
 </html>

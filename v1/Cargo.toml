@@ -13,6 +13,7 @@ serde_json = "1.0"
 sqlx = { version = "0.6", features = ["sqlite", "runtime-tokio-native-tls"] }
 dotenv = "0.15"
 tokio = { version = "1", features = ["full"] }
-futures-util = "0.3.18" # Add this for WebSocket handling
-tokio-tungstenite = "0.15.0" # Add this for WebSocket handling
-url = "2.2.2" # Add this for URL handling
+futures-util = "0.3.18" 
+tokio-tungstenite = "0.15.0" 
+url = "2.2.2" 
+actix-rt = "2"
